@@ -13,7 +13,7 @@ module AtomPub
       
       def retrieve(id)
         entry = Entry.find(id) 
-        return Result[:gone] if entry && entry.deleted
+        return Result[:gone] if entry && entry.deleted?
         atom = entry.to_atom
         atom.edit_url = URI.join(@collection.base, entry.id.to_s)
         Result.new(:successful, atom.to_s)
@@ -39,7 +39,7 @@ module AtomPub
       def update(id, entry_xml)
         entry = Entry.find(id)
         entry.from_atom(entry_xml)
-        return Result[:gone] if entry.deleted
+        return Result[:gone] if entry.deleted?
         entry.save ? Result[:successful] : Result[:unsuccessful]
       rescue ActiveRecord::RecordNotFound
         Result[:missing]
@@ -49,7 +49,7 @@ module AtomPub
 
       def destroy(id)
         entry = Entry.find(id)
-        return Result[:gone] if entry && entry.deleted
+        return Result[:gone] if entry && entry.deleted?
         return (entry.destroy ? Result[:successful] : Result[:unsuccessful])
       rescue ActiveRecord::RecordNotFound
         Result[:missing]
@@ -107,6 +107,10 @@ module Models
 
     def to_s
       to_atom.to_s
+    end
+
+    def deleted?
+      !!deleted
     end
   end
   
