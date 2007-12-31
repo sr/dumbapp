@@ -1,0 +1,10 @@
+collection:
+  uri: http://0.0.0.0:5000
+  title: My Atom Collection
+  author:
+    name: John Doe
+    email: john@doe.name
+    uri: http://john.doe.name
+database:
+  adapter: sqlite
+  database: entries.db

@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+$:.unshift File.dirname(__FILE__) + '/../lib'
+require 'atompub'
+require 'db_store'
+
+if ARGV.size < 1
+  puts "example: atompub config.yml"
+else
+  config = YAML.load_file(ARGV[0])
+  AtomPubServer.store = AtomPub::Store::DbStore.new(config)
+  h = Mongrel::HttpServer.new('0.0.0.0', 5000)
+  h.register('/', AtomPubServer.new)
+  h.run.join
+end
