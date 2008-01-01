@@ -20,8 +20,8 @@ class AtomPubServer < Mongrel::HttpHandler
       service(request, response)
     when '/collection.atom'
       collection(request, response)
-    when /^\/(\d+)$/
-      members(request, response, $1.to_i)
+    when /^\/(\d+)$/, /^\/([a-z0-9\-_]+)$/
+      members(request, response, $1)
     else
       response.start(404, true) {}
     end
@@ -46,7 +46,8 @@ class AtomPubServer < Mongrel::HttpHandler
           body << store.collection
         end
       when :post
-        operation = store.create(request.body)
+        slug = request.params['HTTP_SLUG'] || nil
+        operation = store.create(request.body, slug)
         response.start(400, true) {} if operation.malformed?
         response.start(500, true) {} if operation.unsuccessful?
         response.start(201) do |headers, body|
@@ -59,10 +60,10 @@ class AtomPubServer < Mongrel::HttpHandler
       end
     end
 
-    def members(request, response, id)
+    def members(request, response, identifier)
       case http_method(request) 
       when :get
-        operation = store.retrieve(id)
+        operation = store.retrieve(identifier)
         unless operation.successful?
           response.start(410, true) {} if operation.gone?
           response.start(404, true) {} if operation.missing?
@@ -74,7 +75,7 @@ class AtomPubServer < Mongrel::HttpHandler
           end
         end
       when :put
-        operation = store.update(id, request.body)
+        operation = store.update(identifier, request.body)
         unless operation.successful?
           response.start(410, true) {} if operation.gone?
           response.start(404, true) {} if operation.missing?
@@ -84,7 +85,7 @@ class AtomPubServer < Mongrel::HttpHandler
           response.start(200, true) {}
         end
       when :delete
-        operation = store.destroy(id)
+        operation = store.destroy(identifier)
         unless operation.successful?
           response.start(410, true) {} if operation.gone?
           response.start(404, true) {} if operation.missing?

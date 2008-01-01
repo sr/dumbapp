@@ -11,23 +11,24 @@ module AtomPub
         initialiaze_collection(options['collection'])
       end
       
-      def retrieve(id)
-        entry = Entry.find(id) 
-        return Result[:gone] if entry && entry.deleted?
+      def retrieve(identifier)
+        entry = Entry.find_by_identifier(identifier) 
+        return Result[:missing] unless entry
+        return Result[:gone] if entry.deleted?
         atom = entry.to_atom
-        atom.edit_url = URI.join(@collection.base, entry.id.to_s)
+        atom.edit_url = URI.join(@collection.base, entry.identifier)
         Result.new(:successful, atom.to_s)
-      rescue ActiveRecord::RecordNotFound
-        Result[:missing]
       end
       
-      def create(entry_xml)
-        entry = Entry.new
+      def create(entry_xml, slug=nil)
+        entry = Entry.new(:slug => slug)
         entry.from_atom(entry_xml)
+        atom_entry = entry.to_atom
+        atom_entry.edit_url = URI.join(@collection.base, entry.identifier)
         if entry.save
           Result.new(:successful, {
-            :location => URI.join(@collection.base, entry.id.to_s), 
-            :entry => entry.to_s
+            :location => atom_entry.edit_url,
+            :entry => atom_entry.to_s
           }) 
         else
           Result[:unsuccessful]
@@ -36,31 +37,28 @@ module AtomPub
         Result[:malformed]
       end
      
-      def update(id, entry_xml)
-        entry = Entry.find(id)
+      def update(identifier, entry_xml)
+        entry = Entry.find_by_identifier(identifier)
         entry.from_atom(entry_xml)
+        return Result[:missing] unless entry
         return Result[:gone] if entry.deleted?
         entry.save ? Result[:successful] : Result[:unsuccessful]
-      rescue ActiveRecord::RecordNotFound
-        Result[:missing]
       rescue Atom::ParseError
         Result[:malformed]
       end
 
-      def destroy(id)
-        entry = Entry.find(id)
-        return Result[:gone] if entry && entry.deleted?
-        return (entry.destroy ? Result[:successful] : Result[:unsuccessful])
-      rescue ActiveRecord::RecordNotFound
-        Result[:missing]
+      def destroy(identifier)
+        entry = Entry.find_by_identifier(identifier)
+        return Result[:missing] unless entry
+        return Result[:gone] if entry.deleted?
+        entry.destroy ? Result[:successful] : Result[:unsuccessful]
       end
       
       def collection
         @collection.entries.delete_if { true }
         Entry.find(:all).each do |entry| 
-          entry_id = entry.id
           atom_entry = entry.to_atom
-          atom_entry.edit_url = URI.join(@collection.base, entry_id.to_s)
+          atom_entry.edit_url = URI.join(@collection.base, entry.identifier)
           @collection.entries << atom_entry
         end
         @collection
@@ -86,6 +84,13 @@ end
 
 module Models
   class Entry < ActiveRecord::Base
+    validates_uniqueness_of :slug, :allow_nil => true
+
+    def self.find_by_identifier(identifier)
+      self.find(:first, :conditions => ['slug = :id OR id = :id',
+        {:id => identifier}])
+    end
+
     def from_atom(xml)
       entry = Atom::Entry.parse(xml)
       self.attributes = {
@@ -112,6 +117,10 @@ module Models
     def deleted?
       !!deleted
     end
+
+    def identifier
+      slug || id.to_s
+    end
   end
   
   module_function
@@ -125,6 +134,7 @@ module Models
     ActiveRecord::Schema.define do
       create_table :entries do |t|
         t.string  :title,   :null => false
+        t.string  :slug
         t.text    :content, :null => false
         t.boolean :draft,   :default => false
         t.boolean :deleted, :default => false
