@@ -1,0 +1,3 @@
+[submodule "lib/acts_as_paranoid"]
+	path = lib/acts_as_paranoid
+	url = git://activereload.net/acts_as_paranoid
