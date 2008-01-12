@@ -2,6 +2,10 @@
 active_record
 acts_as_paranoid/lib/caboose/acts/paranoid
 acts_as_paranoid/init
+acts_as_taggable_on_steroids/init
+acts_as_taggable_on_steroids/lib/tag_list
+acts_as_taggable_on_steroids/lib/tagging
+acts_as_taggable_on_steroids/lib/tag
 atom/entry
 store).each { |lib| require lib }
 
@@ -26,8 +30,8 @@ module AtomPub
         entry = Entry.new(:slug => slug)
         entry.from_atom(entry_xml)
         atom_entry = entry.to_atom
-        atom_entry.edit_url = URI.join(@collection.base, entry.identifier)
         if entry.save
+          atom_entry.edit_url = URI.join(@collection.base, entry.identifier)
           Result.new(:successful, {
             :location => atom_entry.edit_url,
             :entry => atom_entry.to_s
@@ -87,6 +91,8 @@ end
 module Models
   class Entry < ActiveRecord::Base
     acts_as_paranoid
+    acts_as_taggable
+
     validates_uniqueness_of :slug, :allow_nil => true
 
     def self.find_by_identifier(identifier)
@@ -101,16 +107,24 @@ module Models
           :content  => entry.content.to_s,
           :draft    => !!entry.draft
       } 
+      self.tag_list = entry.categories.map { |category| category['term'] }.join(', ')
     end
     
     def to_atom
-      Atom::Entry.new do |e|
+      entry = Atom::Entry.new do |e|
         e.title   = title
         e.content = content
+        e.published = created_at
         e.updated = updated_at || created_at
         e.edited  = updated_at
         e.draft   = draft
       end
+      tag_list.each do |tag|
+        category = Atom::Category.new
+        category['term'] = tag
+        entry.categories << category
+      end
+      entry
     end
 
     def to_s
@@ -118,7 +132,7 @@ module Models
     end
 
     def identifier
-      slug || id.to_s
+      (slug || id).to_s
     end
   end
   
@@ -139,6 +153,20 @@ module Models
         t.timestamp :deleted_at
         t.timestamps
       end
+
+      create_table :tags do |t|
+        t.string :name
+      end
+      
+      create_table :taggings do |t|
+        t.integer :tag_id
+        t.integer :taggable_id
+        t.string  :taggable_type      
+        t.timestamps
+      end
+      
+      add_index :taggings, :tag_id
+      add_index :taggings, [:taggable_id, :taggable_type]      
     end
   end
 end
