@@ -1,5 +1,7 @@
 %w(rubygems
 active_record
+acts_as_paranoid/lib/caboose/acts/paranoid
+acts_as_paranoid/init
 atom/entry
 store).each { |lib| require lib }
 
@@ -84,10 +86,11 @@ end
 
 module Models
   class Entry < ActiveRecord::Base
+    acts_as_paranoid
     validates_uniqueness_of :slug, :allow_nil => true
 
     def self.find_by_identifier(identifier)
-      self.find(:first, :conditions => ['slug = :id OR id = :id',
+      self.find_with_deleted(:first, :conditions => ['slug = :id OR id = :id',
         {:id => identifier}])
     end
 
@@ -114,10 +117,6 @@ module Models
       to_atom.to_s
     end
 
-    def deleted?
-      !!deleted
-    end
-
     def identifier
       slug || id.to_s
     end
@@ -137,7 +136,7 @@ module Models
         t.string  :slug
         t.text    :content, :null => false
         t.boolean :draft,   :default => false
-        t.boolean :deleted, :default => false
+        t.timestamp :deleted_at
         t.timestamps
       end
     end
