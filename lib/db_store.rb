@@ -93,6 +93,8 @@ module Models
     acts_as_paranoid
     acts_as_taggable
 
+    has_many :links
+
     validates_uniqueness_of :slug, :allow_nil => true
 
     def self.find_by_identifier(identifier)
@@ -107,6 +109,7 @@ module Models
           :content  => entry.content.to_s,
           :draft    => !!entry.draft
       } 
+      entry.links.each { |link| links << Link.new(:href => link['href'], :rel => link['rel']) }
       self.tag_list = entry.categories.map { |category| category['term'] }.join(', ')
     end
     
@@ -118,6 +121,12 @@ module Models
         e.updated = updated_at || created_at
         e.edited  = updated_at
         e.draft   = draft
+      end
+      links.each do |link|
+        l = Atom::Link.new
+        l['rel'] = link.rel
+        l['href'] = link.href
+        entry.links << l
       end
       tag_list.each do |tag|
         category = Atom::Category.new
@@ -134,6 +143,10 @@ module Models
     def identifier
       (slug || id).to_s
     end
+  end
+
+  class Link < ActiveRecord::Base
+    belongs_to :entry
   end
   
   module_function
@@ -152,6 +165,12 @@ module Models
         t.boolean :draft,   :default => false
         t.timestamp :deleted_at
         t.timestamps
+      end
+
+      create_table :links do |t|
+        t.string :rel
+        t.string :href
+        t.integer :entry_id
       end
 
       create_table :tags do |t|
