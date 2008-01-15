@@ -6,6 +6,13 @@ atom/entry
 db_store).each { |l| require l }
 
 class AtomPubServer < Mongrel::HttpHandler
+  @@auth_locations = %w(REDIRECT_X_HTTP_AUTHORIZATION
+    X-HTTP_AUTHORIZATION HTTP_AUTHORIZATION)
+
+  def self.auth=(auth)
+    @@auth = auth
+  end
+
   def self.store=(store)
     @@store = store
   end
@@ -14,7 +21,19 @@ class AtomPubServer < Mongrel::HttpHandler
     @@store
   end
 
+  def auth
+    AtomPubServer.class_variable_defined?(:@@auth) ? @@auth : false
+  end
+
   def process(request, response) 
+    if auth && !authenticate(request)
+      response.start(401, true) do |header, body|
+        header['Status'] = 'Unauthorized'
+        header['WWW-Authenticate'] = 'Basic realm="My Atom Collection"'
+      end
+      return
+    end
+
     case request.params[Mongrel::Const::PATH_INFO]
     when '/'
       service(request, response)
@@ -27,7 +46,7 @@ class AtomPubServer < Mongrel::HttpHandler
     end
   end
 
-  private
+  protected
     def service(request, response)
       response.start(405, true) {} unless http_method(request) == :get
       response.start(200) do |header, body|
@@ -100,5 +119,25 @@ class AtomPubServer < Mongrel::HttpHandler
 
     def http_method(request)
       request.params[Mongrel::Const::REQUEST_METHOD].downcase.to_sym
+    end
+    
+    def authenticate(request)
+       auth == get_auth_data(request.params)
+    end
+
+    def get_auth_data(request)
+      authdata = nil
+      for location in @@auth_locations
+        if request.has_key?(location)
+          # split based on whitespace, but only split into two pieces
+          authdata = request[location].to_s.split(nil, 2)
+        end
+      end
+      if authdata and authdata[0] == 'Basic'
+        user, password = Base64.decode64(authdata[1]).split(':')[0..1]
+      else
+        user, password = ['', '']
+      end
+      return user, password
     end
 end
