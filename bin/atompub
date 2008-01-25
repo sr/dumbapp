@@ -4,13 +4,13 @@ require 'atompub'
 require 'db_store'
 
 if ARGV.size < 1
-  puts "example: atompub config.yml"
+  puts "example: atompub config.yml [address] [port]"
 else
   config = YAML.load_file(ARGV[0])
   login, password = config['collection'].values_at('login', 'password')
   AtomPubServer.store = AtomPub::Store::DbStore.new(config)
   AtomPubServer.auth = [login, password] if login && password 
-  h = Mongrel::HttpServer.new('0.0.0.0', 5000)
+  h = Mongrel::HttpServer.new(ARGV[1] || '0.0.0.0', ARGV[2] || 5000)
   h.register('/', AtomPubServer.new)
   h.run.join
 end
