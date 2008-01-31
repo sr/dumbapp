@@ -6,6 +6,7 @@ acts_as_taggable_on_steroids/init
 acts_as_taggable_on_steroids/lib/tag_list
 acts_as_taggable_on_steroids/lib/tagging
 acts_as_taggable_on_steroids/lib/tag
+uuid
 atom/entry
 store).each { |lib| require lib }
 
@@ -29,8 +30,8 @@ module AtomPub
       def create(entry_xml, slug=nil)
         entry = Entry.new(:slug => slug)
         entry.from_atom(entry_xml)
-        atom_entry = entry.to_atom
         if entry.save
+          atom_entry = entry.to_atom
           atom_entry.edit_url = URI.join(@collection.base, entry.identifier)
           Result.new(:successful, {
             :location => atom_entry.edit_url,
@@ -92,10 +93,14 @@ module Models
   class Entry < ActiveRecord::Base
     acts_as_paranoid
     acts_as_taggable
-
+    
     has_many :links
 
     validates_uniqueness_of :slug, :allow_nil => true
+
+    def before_create
+      self.uuid = UUID.uuid
+    end
 
     def self.find_by_identifier(identifier)
       self.find_with_deleted(:first, :conditions => ['slug = :id OR id = :id',
@@ -116,6 +121,7 @@ module Models
     def to_atom
       entry = Atom::Entry.new do |e|
         e.title   = title
+        e.id      = uuid
         e.content = content
         e.published = created_at
         e.updated = updated_at || created_at
@@ -161,6 +167,7 @@ module Models
       create_table :entries do |t|
         t.string  :title,   :null => false
         t.string  :slug
+        t.string  :uuid,    :null => false
         t.text    :content, :null => false
         t.boolean :draft,   :default => false
         t.timestamp :deleted_at
