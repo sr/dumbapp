@@ -128,17 +128,8 @@ module Models
         e.edited  = updated_at
         e.draft   = draft
       end
-      links.each do |link|
-        l = Atom::Link.new
-        l['rel'] = link.rel
-        l['href'] = link.href
-        entry.links << l
-      end
-      tag_list.each do |tag|
-        category = Atom::Category.new
-        category['term'] = tag
-        entry.categories << category
-      end
+      links.each { |link| entry.links << Atom::Link.new(:href => link.href, :rel => link.rel) }
+      entry.tag_with(tag_list)
       entry
     end
 
