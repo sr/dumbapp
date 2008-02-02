@@ -112,7 +112,7 @@ module Models
       self.attributes = {
           :title    => entry.title.to_s, 
           :content  => entry.content.to_s,
-          :draft    => !!entry.draft
+          :draft    => entry.draft?
       } 
       entry.links.each { |link| links << Link.new(:href => link['href'], :rel => link['rel']) }
       self.tag_list = entry.categories.map { |category| category['term'] }.join(', ')
@@ -123,6 +123,7 @@ module Models
         e.title   = title
         e.id      = 'urn:uuid' + uuid
         e.content = content
+        e.content['type'] = 'xhtml'
         e.published = created_at
         e.updated = updated_at || created_at
         e.edited  = updated_at
