@@ -63,7 +63,7 @@ module AtomPub
       
       def collection
         @collection.entries.delete_if { true }
-        Entry.find(:all).each do |entry| 
+        Entry.find(:all, :order => 'updated_at DESC').each do |entry|
           atom_entry = entry.to_atom
           atom_entry.edit_url = URI.join(@collection.base, entry.identifier)
           @collection.entries << atom_entry
