@@ -1,6 +1,0 @@
-- HTTP Basic Auth support
-- Support app:summary
-- Proper support of contact and summary @type
-- Find out why there is still two APE warning
-- Category support
-- BUG: #destroy really destroys the Entry in database
