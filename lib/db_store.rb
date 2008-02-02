@@ -121,7 +121,7 @@ module Models
     def to_atom
       entry = Atom::Entry.new do |e|
         e.title   = title
-        e.id      = uuid
+        e.id      = 'urn:uuid' + uuid
         e.content = content
         e.published = created_at
         e.updated = updated_at || created_at
