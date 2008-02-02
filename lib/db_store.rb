@@ -111,6 +111,7 @@ module Models
       entry = Atom::Entry.parse(xml)
       self.attributes = {
           :title    => entry.title.to_s, 
+          :summary  => entry.summary.to_s,
           :content  => entry.content.to_s,
           :draft    => entry.draft?
       } 
@@ -124,6 +125,10 @@ module Models
         e.id      = 'urn:uuid' + uuid
         e.content = content
         e.content['type'] = 'xhtml'
+        if summary
+          e.summary = summary
+          e.summary['type'] = 'html'
+        end
         e.published = created_at
         e.updated = updated_at || created_at
         e.edited  = updated_at
@@ -161,6 +166,7 @@ module Models
         t.string  :slug
         t.string  :uuid,    :null => false
         t.text    :content, :null => false
+        t.text    :summary
         t.boolean :draft,   :default => false
         t.timestamp :deleted_at
         t.timestamps
