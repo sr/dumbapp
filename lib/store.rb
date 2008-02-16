@@ -1,4 +1,4 @@
-module AtomPub
+module DumbApp
   module Store
     class Interface < Object
       def create(entry_xml)

@@ -10,7 +10,7 @@ uuid
 atom/entry
 store).each { |lib| require lib }
 
-module AtomPub
+module DumbApp
   module Store
     class ActiveRecord < Interface     
       def initialize(options={})
@@ -195,4 +195,4 @@ module Models
   end
 end
 
-AtomPub::Store::ActiveRecord.send(:include, Models)
+DumbApp::Store::ActiveRecord.send(:include, Models)
