@@ -122,7 +122,7 @@ module Models
     def to_atom
       entry = Atom::Entry.new do |e|
         e.title   = title
-        e.id      = 'urn:uuid' + uuid
+        e.id      = 'urn:uuid:' + uuid
         e.content = content
         e.content['type'] = 'xhtml'
         if summary
