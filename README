@@ -1,0 +1,17 @@
+DumbApp is a simple AtomPub (RFC 5023) implementation based on Mongrel and ActiveRecord.
+
+== Licence
+
+DumbApp is copyright 2008 Simon Rozet. It is licensed under the MIT licence.
+See the included LICENSE file for details.
+
+== Usage
+
+  % git clone git://atonie.org/dumbapp.git
+  % cd dumbapp.git
+  % cp config.yml.example config.yml
+  % ./bin/dumbapp config.yml
+
+== Contact
+
+Simon Rozet -- simon@rozet.name
