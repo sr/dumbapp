@@ -1,14 +1,14 @@
 #!/usr/bin/env ruby
 $:.unshift File.dirname(__FILE__) + '/../lib'
 require 'atompub'
-require 'db_store'
+require 'store/active_record'
 
 if ARGV.size < 1
   puts "example: atompub config.yml [address] [port]"
 else
   config = YAML.load_file(ARGV[0])
   login, password = config['collection'].values_at('login', 'password')
-  AtomPubServer.store = AtomPub::Store::DbStore.new(config)
+  AtomPubServer.store = AtomPub::Store::ActiveRecord.new(config)
   AtomPubServer.auth = [login, password] if login && password 
   h = Mongrel::HttpServer.new(ARGV[1] || '0.0.0.0', ARGV[2] || 5000)
   h.register('/', AtomPubServer.new)

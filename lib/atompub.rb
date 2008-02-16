@@ -2,8 +2,7 @@
 mongrel
 atom/service
 atom/collection
-atom/entry
-db_store).each { |l| require l }
+atom/entry).each { |l| require l }
 
 class AtomPubServer < Mongrel::HttpHandler
   @@auth_locations = %w(REDIRECT_X_HTTP_AUTHORIZATION

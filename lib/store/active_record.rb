@@ -12,7 +12,7 @@ store).each { |lib| require lib }
 
 module AtomPub
   module Store
-    class DbStore < Interface     
+    class ActiveRecord < Interface     
       def initialize(options={})
         establish_connection(options['database'])
         initialiaze_collection(options['collection'])
@@ -113,7 +113,7 @@ module Models
           :title    => entry.title.to_s, 
           :summary  => entry.summary.to_s,
           :content  => entry.content.to_s,
-          :draft    => entry.draft?
+          :draft    => entry.draft
       } 
       entry.links.each { |link| links << Link.new(:href => link['href'], :rel => link['rel']) }
       self.tag_list = entry.categories.map { |category| category['term'] }.join(', ')
@@ -195,4 +195,4 @@ module Models
   end
 end
 
-AtomPub::Store::DbStore.send(:include, Models)
+AtomPub::Store::ActiveRecord.send(:include, Models)
