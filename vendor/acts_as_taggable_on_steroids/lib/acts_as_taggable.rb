@@ -39,6 +39,13 @@ module ActiveRecord #:nodoc:
           options = find_options_for_find_tagged_with(*args)
           options.blank? ? [] : find(:all, options)
         end
+
+        # will_paginate's method_missing function wants to hit
+        # find_all_tagged_with if you call paginate_tagged_with, which is
+        # obviously suboptimal
+        def find_all_tagged_with(*args)
+          find_tagged_with(*args)
+        end
         
         def find_options_for_find_tagged_with(tags, options = {})
           tags = tags.is_a?(Array) ? TagList.new(tags.map(&:to_s)) : TagList.from(tags)
@@ -92,6 +99,12 @@ module ActiveRecord #:nodoc:
         def tag_counts(options = {})
           Tag.find(:all, find_options_for_tag_counts(options))
         end
+
+        # Find how many objects are tagged with a certain tag.
+        def count_by_tag(tag_name)
+          counts = tag_counts(:conditions => "tags.name = #{quote_value(tag_name)}")
+          counts[0].respond_to?(:count) ? counts[0].count : 0
+        end
         
         def find_options_for_tag_counts(options = {})
           options.assert_valid_keys :start_at, :end_at, :conditions, :at_least, :at_most, :order, :limit
@@ -103,7 +116,7 @@ module ActiveRecord #:nodoc:
           
           conditions = [
             "#{Tagging.table_name}.taggable_type = #{quote_value(base_class.name)}",
-            options.delete(:conditions),
+            sanitize_sql(options.delete(:conditions)),
             scope && scope[:conditions],
             start_at,
             end_at
@@ -169,7 +182,10 @@ module ActiveRecord #:nodoc:
           old_tags = tags.reject { |tag| @tag_list.include?(tag.name) }
           
           self.class.transaction do
-            tags.delete(*old_tags) if old_tags.any?
+            if old_tags.any?
+              taggings.find(:all, :conditions => ["tag_id IN (?)", old_tags.map(&:id)]).each(&:destroy)
+              taggings.reset
+            end
             
             new_tag_names.each do |new_tag_name|
               tags << Tag.find_or_create_with_like_by_name(new_tag_name)

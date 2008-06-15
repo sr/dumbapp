@@ -1,3 +1,16 @@
+[13 March 08]
+
+* Added helper methods for will_paginate compatibility (Clinton R. Nixon)
+* Fixed :conditions in tag_counts to accept array to sanitize (Clinton R. Nixon)
+
+[07 March 08]
+
+* Added support for regexp delimiter (Matt Aimonetti)
+
+[30 Jan 08]
+
+* Fix Tag.destroy_unused on Rails 2.0.
+
 [23 October 2007]
 
 * Make find_options_for_tag_counts and find_options_for_tagged_with dup their options.
