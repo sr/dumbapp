@@ -1,3 +1,7 @@
+require File.dirname(__FILE__) + '/lib/caboose/acts/paranoid'
+require File.dirname(__FILE__) + '/lib/caboose/acts/belongs_to_with_deleted_association'
+require File.dirname(__FILE__) + '/lib/caboose/acts/has_many_through_without_deleted_association'
+
 class << ActiveRecord::Base
   def belongs_to_with_deleted(association_id, options = {})
     with_deleted = options.delete :with_deleted

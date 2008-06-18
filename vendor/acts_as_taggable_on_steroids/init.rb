@@ -1,1 +1,6 @@
+require File.dirname(__FILE__) + '/lib/tag'
+require File.dirname(__FILE__) + '/lib/tag_list'
+require File.dirname(__FILE__) + '/lib/tagging'
+require File.dirname(__FILE__) + '/lib/tags_helper'
+require File.dirname(__FILE__) + '/lib/tag_counts_extension'
 require File.dirname(__FILE__) + '/lib/acts_as_taggable'
