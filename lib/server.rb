@@ -61,7 +61,7 @@ class AtomPubServer < Mongrel::HttpHandler
       when :get
         response.start(200) do |headers, body|
           headers['Content-Type'] = 'application/atom+xml'
-          body << store.collection
+          body << store.collection.feed
         end
       when :post
         slug = request.params['HTTP_SLUG'] || nil

@@ -1,14 +1,13 @@
-%w(rubygems
-active_record
-acts_as_paranoid/lib/caboose/acts/paranoid
-acts_as_paranoid/init
-acts_as_taggable_on_steroids/init
-acts_as_taggable_on_steroids/lib/tag_list
-acts_as_taggable_on_steroids/lib/tagging
-acts_as_taggable_on_steroids/lib/tag
-uuid
-atom/entry
-store).each { |lib| require lib }
+require 'rubygems'
+require 'active_record'
+require 'uuid'
+require 'atom/entry'
+require 'store'
+
+$: << File.expand_path(File.dirname(__FILE__)) + '/../../vendor'
+
+require 'acts_as_paranoid/init'
+require 'acts_as_taggable_on_steroids/init'
 
 module DumbApp
   module Store
@@ -62,11 +61,11 @@ module DumbApp
       end
       
       def collection
-        @collection.entries.delete_if { true }
+        @collection.feed.entries.delete_if { true }
         Entry.find(:all, :order => 'updated_at DESC').each do |entry|
           atom_entry = entry.to_atom
           atom_entry.edit_url = URI.join(@collection.base, entry.identifier)
-          @collection.entries << atom_entry
+          @collection.feed.entries << atom_entry
         end
         @collection
       end
@@ -77,8 +76,9 @@ module DumbApp
           @collection.base = options['uri']
           @collection.title = options['title']
           
+          @collection.feed.authors.new({:name => 'foo'})
           if options.has_key?('author')
-            author = @collection.authors.new
+            author = @collection.feed.authors.new
             options['author'].each_key do |property|
               attribute = "#{property}=".to_sym
               author.send(attribute, options['author'][property]) if author.respond_to?(attribute)
@@ -120,20 +120,19 @@ module Models
     end
     
     def to_atom
-      entry = Atom::Entry.new do |e|
-        e.title   = title
-        e.id      = 'urn:uuid:' + uuid
-        e.content = content
-        e.content['type'] = 'xhtml'
-        if summary
-          e.summary = summary
-          e.summary['type'] = 'html'
-        end
-        e.published = created_at
-        e.updated = updated_at || created_at
-        e.edited  = updated_at
-        e.draft   = draft
+      entry = Atom::Entry.new
+      entry.title   = title
+      entry.id      = 'urn:uuid:' + uuid
+      entry.content = content
+      entry.content['type'] = 'xhtml'
+      if summary
+        entry.summary = summary
+        entry.summary['type'] = 'html'
       end
+      entry.published = created_at
+      entry.updated = updated_at || created_at
+      entry.edited  = updated_at
+      entry.draft   = draft
       links.each { |link| entry.links << Atom::Link.new(:href => link.href, :rel => link.rel) }
       entry.tag_with(tag_list)
       entry
