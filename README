@@ -12,6 +12,13 @@ See the included LICENSE file for details.
   % cp config.yml.example config.yml
   % ./bin/dumbapp config.yml
 
+== Required gems
+
+- mongrel
+- active_record
+- atom-tools
+- uuid
+
 == Contact
 
 Simon Rozet -- simon@rozet.name
