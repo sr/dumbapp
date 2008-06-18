@@ -6,5 +6,5 @@ collection:
     email: john@doe.name
     uri: http://john.doe.name
 database:
-  adapter: sqlite
+  adapter: sqlite3
   database: entries.db
